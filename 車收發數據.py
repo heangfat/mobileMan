@@ -7,12 +7,14 @@ import numpy as 算
 import cv2
 import time
 import struct
+import random
 
-本機地址 = '10.96.45.36'# 壞'10.25.57.175'
+本機地址 = '192.168.10.124'#'10.96.45.36'
 收信端口 = 6666
-sUDPrcv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);sUDPrcv.bind((本機地址,收信端口))
+sUDPrcv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);sUDPrcv.bind(('',收信端口))
 遙控器地址 = '127.0.0.1';遙控器端口 = 6677
 sUDPsd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#;sUDPsd.bind((遙控器地址,遙控器端口))
+sTCPserv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)#;sTCPserv.bind(('',7888));sTCPserv.listen(5)# 文字.
 sTCPvideo = socket.socket(socket.AF_INET, socket.SOCK_STREAM);sTCPvideo.bind((本機地址,7999));sTCPvideo.listen(5)
 口令 = '我是主平板。'
 收得 = ''
@@ -33,7 +35,7 @@ def 發信(套接):
 			狀態["距離"] = 算.round(亂數.random(6)*10,4).tolist()
 			#print(f'發至{遙控器地址}:{遙控器端口}')# 收聽 ROS 話題
 			套接.sendto(json.dumps(狀態).encode('utf-8'), (遙控器地址,遙控器端口))
-def 發視訊(client, addr):
+def 發視訊(client, useTCP=True):
 	camera = cv2.VideoCapture(0)
 	編碼參數 = [int(cv2.IMWRITE_JPEG_QUALITY),圖像屬性["img_quality"]]
 	while True:
@@ -48,6 +50,39 @@ def 發視訊(client, addr):
 				#UDP：套接.sendto(struct.pack("lhh",len(imgdata), 圖像屬性["resolution"][0],圖像屬性["resolution"][1])+imgdata, (遙控器地址,7999))
 			except:
 				camera.release()
+# def 复挂號信(sock, addr):
+# 	print('%s:%s 求連，受之。' % addr)
+# 	sock.send('歡迎'.encode('utf-8'))
+# 	while True:
+# 		data = sock.recv(1024)
+# 		time.sleep(1)
+# 		if not data or data.decode('utf-8') == '敔':
+# 			break
+# 		sock.send(('喏，%s！' % data.decode('utf-8')).encode('utf-8'))
+# 	sock.close();print('與 %s:%s 斷了。' % addr)
+class 畣复文字 :
+	def __init__(self):
+		global sTCPserv
+		sTCPserv.bind(('',7888));sTCPserv.listen(5)
+	def 畣复(self, sock, addr):
+		print('%s:%s 求連，受之。' % addr)
+		sock.send('歡迎'.encode('utf-8'))
+		while True:
+			data = sock.recv(1024)
+			time.sleep(1)
+			if not data:
+				continue
+			if data.decode('utf-8') == '敔':
+				break
+			信長 = random.randrange(10000,10100);print(信長,'---',data.decode('utf-8'),end=' ■ ')
+			sock.send(struct.pack('lhh',信長,480,640)+('喏，%s！' % data.decode('utf-8')).encode('utf-8'))
+		sock.close();print('與 %s:%s 斷了。' % addr)
+	def 響應(self):
+		#global 對方址口
+		while True:
+			sock, 對方址口 = sTCPserv.accept()
+			t = threading.Thread(target=self.畣复, args=(sock, 對方址口))
+			t.start()
 def 收信(套接):
 	global 遙控器地址,收得
 	while True:
@@ -61,7 +96,13 @@ def 收信(套接):
 綫程發 = threading.Thread(target=發信, args=(sUDPsd,))
 綫程收.start();綫程發.start()
 #綫程收.join();綫程發.join()
+tcptxt = 畣复文字()
+tcptxt.響應()
 while True:
 	client,addr = sTCPvideo.accept()
 	clientThread = threading.Thread(target = 發視訊, args = (client, addr, ))
 	clientThread.start()
+
+	# sock, addr = sTCPserv.accept()
+	# t = threading.Thread(target=复挂號信, args=(sock, addr))
+	# t.start()
