@@ -64,19 +64,36 @@ class 畣复文字 :
 	def __init__(self):
 		global sTCPserv
 		sTCPserv.bind(('',7888));sTCPserv.listen(5)
+		self.畫質 = 15;self.resolution = (640,480)
+		self.流水號 = 0
 	def 畣复(self, sock, addr):
 		print('%s:%s 求連，受之。' % addr)
-		sock.send('歡迎'.encode('utf-8'))
+		#sock.send('歡迎'.encode('utf-8'))
+		camera = cv2.VideoCapture(0)
+		encode_param=[int(cv2.IMWRITE_JPEG_QUALITY), self.畫質]
 		while True:
-			data = sock.recv(1024)
-			time.sleep(1)
-			if not data:
-				continue
-			if data.decode('utf-8') == '敔':
-				break
-			信長 = random.randrange(10000,10100);print(信長,'---',data.decode('utf-8'),end=' ■ ')
-			sock.send(struct.pack('lhh',信長,480,640)+('喏，%s！' % data.decode('utf-8')).encode('utf-8'))
+			time.sleep(0.2)
+			try:
+				(grabbed, self.img) = camera.read()
+				self.img  = cv2.resize(self.img,self.resolution)
+				result, imgencode = cv2.imencode('.jpg',self.img,encode_param)
+				img_code = 算.array(imgencode)
+				self.imgdata  = img_code.tobytes()
+				#cv2.imshow('服務端',self.img)
+				data = sock.recv(1024)
+				if not data:
+					continue
+				# if data.decode('utf-8') == '敔':
+				# 	break
+				信長 = len(self.imgdata)#random.randrange(123490000,123490100);
+				print(self.流水號,struct.pack('l',信長),信長,'---',data.decode('utf-8'),end=' ■ ')
+				sock.send(struct.pack('lhh',信長,480,640)+self.imgdata)#('喏，%s！' % data.decode('utf-8')).encode('utf-8')
+			except:
+				print(self.流水號,'　　〼該幀未捕獲或未發出。')
+			finally:
+				self.流水號 += 1
 		sock.close();print('與 %s:%s 斷了。' % addr)
+		camera.release()
 	def 響應(self):
 		#global 對方址口
 		while True:
@@ -98,10 +115,10 @@ def 收信(套接):
 #綫程收.join();綫程發.join()
 tcptxt = 畣复文字()
 tcptxt.響應()
-while True:
-	client,addr = sTCPvideo.accept()
-	clientThread = threading.Thread(target = 發視訊, args = (client, addr, ))
-	clientThread.start()
+# while True:
+# 	client,addr = sTCPvideo.accept()
+# 	clientThread = threading.Thread(target = 發視訊, args = (client, addr, ))
+# 	clientThread.start()
 
 	# sock, addr = sTCPserv.accept()
 	# t = threading.Thread(target=复挂號信, args=(sock, addr))
