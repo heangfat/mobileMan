@@ -14,8 +14,8 @@ import random
 sUDPrcv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);sUDPrcv.bind(('',收信端口))
 遙控器地址 = '127.0.0.1';遙控器端口 = 6677
 sUDPsd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#;sUDPsd.bind((遙控器地址,遙控器端口))
-sTCPserv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)#;sTCPserv.bind(('',7888));sTCPserv.listen(5)# 文字.
-sTCPvideo = socket.socket(socket.AF_INET, socket.SOCK_STREAM);sTCPvideo.bind((本機地址,7999));sTCPvideo.listen(5)
+#sTCPserv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)#;sTCPserv.bind(('',7888));sTCPserv.listen(5)# 文字.
+#sTCPvideo = socket.socket(socket.AF_INET, socket.SOCK_STREAM);sTCPvideo.bind((本機地址,7999));sTCPvideo.listen(5)
 口令 = '我是主平板。'
 收得 = ''
 亂數 = 算.random.default_rng(1)
@@ -35,21 +35,21 @@ def 發信(套接):
 			狀態["距離"] = 算.round(亂數.random(6)*10,4).tolist()
 			#print(f'發至{遙控器地址}:{遙控器端口}')# 收聽 ROS 話題
 			套接.sendto(json.dumps(狀態).encode('utf-8'), (遙控器地址,遙控器端口))
-def 發視訊(client, useTCP=True):
-	camera = cv2.VideoCapture(0)
-	編碼參數 = [int(cv2.IMWRITE_JPEG_QUALITY),圖像屬性["img_quality"]]
-	while True:
-		if True:#遙控器地址 != '127.0.0.1':
-			time.sleep(0.13)
-			rval, frame = camera.read()
-			frame = cv2.resize(frame, 圖像屬性["resolution"])
-			result, imgencode = cv2.imencode('.jpg', frame, 編碼參數)
-			imgdata = 算.array(imgencode).tobytes()
-			try:
-				client.send(struct.pack("lhh",len(imgdata), 圖像屬性["resolution"][0],圖像屬性["resolution"][1])+imgdata)#;print(len(imgdata))
-				#UDP：套接.sendto(struct.pack("lhh",len(imgdata), 圖像屬性["resolution"][0],圖像屬性["resolution"][1])+imgdata, (遙控器地址,7999))
-			except:
-				camera.release()
+# def 發視訊(client, useTCP=True):
+# 	camera = cv2.VideoCapture(0)
+# 	編碼參數 = [int(cv2.IMWRITE_JPEG_QUALITY),圖像屬性["img_quality"]]
+# 	while True:
+# 		if True:#遙控器地址 != '127.0.0.1':
+# 			time.sleep(0.13)
+# 			rval, frame = camera.read()
+# 			frame = cv2.resize(frame, 圖像屬性["resolution"])
+# 			result, imgencode = cv2.imencode('.jpg', frame, 編碼參數)
+# 			imgdata = 算.array(imgencode).tobytes()
+# 			try:
+# 				client.send(struct.pack("lhh",len(imgdata), 圖像屬性["resolution"][0],圖像屬性["resolution"][1])+imgdata)#;print(len(imgdata))
+# 				#UDP：套接.sendto(struct.pack("lhh",len(imgdata), 圖像屬性["resolution"][0],圖像屬性["resolution"][1])+imgdata, (遙控器地址,7999))
+# 			except:
+# 				camera.release()
 # def 复挂號信(sock, addr):
 # 	print('%s:%s 求連，受之。' % addr)
 # 	sock.send('歡迎'.encode('utf-8'))
@@ -61,43 +61,37 @@ def 發視訊(client, useTCP=True):
 # 		sock.send(('喏，%s！' % data.decode('utf-8')).encode('utf-8'))
 # 	sock.close();print('與 %s:%s 斷了。' % addr)
 class 畣复文字 :
-	def __init__(self):
-		global sTCPserv
-		sTCPserv.bind(('',7888));sTCPserv.listen(5)
+	def __init__(self,受端口):
+		#global sTCPserv
+		self.TCPsvSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.TCPsvSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+		self.TCPsvSock.bind(('',受端口));self.TCPsvSock.listen(5)
+		#sTCPserv.bind(('',受端口));sTCPserv.listen(5)
 		self.畫質 = 15;self.resolution = (640,480)
 		self.流水號 = 0
 	def 畣复(self, sock, addr):
 		print('%s:%s 求連，受之。' % addr)
-		#sock.send('歡迎'.encode('utf-8'))
-		camera = cv2.VideoCapture(0)
-		encode_param=[int(cv2.IMWRITE_JPEG_QUALITY), self.畫質]
+		sock.send('歡迎'.encode('utf-8'))
 		while True:
-			time.sleep(0.2)
+			time.sleep(0.1)
 			try:
-				(grabbed, self.img) = camera.read()
-				self.img  = cv2.resize(self.img,self.resolution)
-				result, imgencode = cv2.imencode('.jpg',self.img,encode_param)
-				img_code = 算.array(imgencode)
-				self.imgdata  = img_code.tobytes()
-				#cv2.imshow('服務端',self.img)
 				data = sock.recv(1024)
 				if not data:
 					continue
-				# if data.decode('utf-8') == '敔':
-				# 	break
-				信長 = len(self.imgdata)#random.randrange(123490000,123490100);
+				if data.decode('utf-8') == '敔':
+					break
+				信長 = random.randrange(123490000,123490100);
 				print(self.流水號,struct.pack('l',信長),信長,'---',data.decode('utf-8'),end=' ■ ')
-				sock.send(struct.pack('lhh',信長,480,640)+self.imgdata)#('喏，%s！' % data.decode('utf-8')).encode('utf-8')
+				sock.send(struct.pack('lhh',信長,480,640))#('喏，%s！' % data.decode('utf-8')).encode('utf-8')
 			except:
 				print(self.流水號,'　　〼該幀未捕獲或未發出。')
 			finally:
 				self.流水號 += 1
 		sock.close();print('與 %s:%s 斷了。' % addr)
-		camera.release()
 	def 響應(self):
 		#global 對方址口
 		while True:
-			sock, 對方址口 = sTCPserv.accept()
+			sock, 對方址口 = self.TCPsvSock.accept()
 			t = threading.Thread(target=self.畣复, args=(sock, 對方址口))
 			t.start()
 def 收信(套接):
@@ -113,8 +107,40 @@ def 收信(套接):
 綫程發 = threading.Thread(target=發信, args=(sUDPsd,))
 綫程收.start();綫程發.start()
 #綫程收.join();綫程發.join()
-tcptxt = 畣复文字()
-tcptxt.響應()
+class 畣复視訊(畣复文字):
+	def 畣复(self, sock, addr):
+		print('%s:%s 求連，受之。' % addr)
+		camera = cv2.VideoCapture(0)
+		encode_param=[int(cv2.IMWRITE_JPEG_QUALITY), self.畫質]
+		while True:
+			time.sleep(0.13)
+			try:
+				(grabbed, self.img) = camera.read()
+				self.img  = cv2.resize(self.img,self.resolution)
+				result, imgencode = cv2.imencode('.jpg',self.img,encode_param)
+				img_code = 算.array(imgencode)
+				self.imgdata  = img_code.tobytes()
+				#cv2.imshow('服務端',self.img)
+				data = sock.recv(1024)
+				if not data:
+					continue
+				信長 = len(self.imgdata)
+				print(self.流水號,信長,'---',end=' ■ ')#,struct.pack('l',信長),data.decode('utf-8')
+			except Exception as e:
+				print(self.流水號,'　　〼該幀未捕獲。錯因',e)
+				continue
+			try:
+				sock.send(struct.pack('lhh',信長,480,640)+self.imgdata)#('喏，%s！' % data.decode('utf-8')).encode('utf-8')
+			except:
+				print(self.流水號,'　　〼該幀未發出。')
+			finally:
+				self.流水號 += 1
+		sock.close();print('與 %s:%s 斷了。' % addr)
+		camera.release()
+tcpvideo = 畣复視訊(7890)
+tcpvideo.響應()
+tcptxt = 畣复文字(7888)
+#tcptxt.響應()
 # while True:
 # 	client,addr = sTCPvideo.accept()
 # 	clientThread = threading.Thread(target = 發視訊, args = (client, addr, ))
