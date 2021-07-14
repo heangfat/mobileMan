@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -85,14 +86,15 @@ public class MainActivity extends AppCompatActivity {
         //platformStatus.setBackgroundColor(0xFFF43E06);platformStatus.setText("未發送。");
         new udpBroadCast("開始了！").start();
         //platformStatus.setBackgroundColor(0xFF11CC44);platformStatus.setText("發送了。");
-        btnForward.setOnClickListener(listener);btnBackward.setOnClickListener(listener);btnLeft.setOnClickListener(listener);btnRight.setOnClickListener(listener);
+        //btnForward.setOnClickListener(listener);btnBackward.setOnClickListener(listener);btnLeft.setOnClickListener(listener);btnRight.setOnClickListener(listener);
+        btnForward.setOnTouchListener(touchListner);btnBackward.setOnTouchListener(touchListner);btnLeft.setOnTouchListener(touchListner);btnRight.setOnTouchListener(touchListner);
         showRobotIP.setText("Robot/"+robotIP);
         try{本機地址 = getLocalHostLANAddress().toString();showSelfIP.setText("Self"+本機地址);}catch(Exception e){e.printStackTrace();}
-        tcp_ask = new tcpAsk();
+        tcp_ask = new tcpAsk(7890);
         tcp_ask.start();
         //new tcpReceive().start();
     }
-    private View.OnClickListener listener = new View.OnClickListener(){
+    /*private View.OnClickListener listener = new View.OnClickListener(){
         @Override
         public void onClick(View v){
             if (v == btnForward){
@@ -107,6 +109,24 @@ public class MainActivity extends AppCompatActivity {
             if (!tcpAskConnected){
                 tcp_ask.start();
             }
+        }
+    };*/
+    private View.OnTouchListener touchListner = new View.OnTouchListener(){
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if (v == btnForward){
+                new udpBroadCast("進").start();
+            } else if (v == btnBackward) {
+                new udpBroadCast("退").start();
+            } else if (v == btnLeft){
+                new udpBroadCast("左").start();
+            } else if (v == btnRight){
+                new udpBroadCast("右").start();
+            }
+            if (!tcpAskConnected){
+                tcp_ask.start();
+            }
+            return false;
         }
     };
     /*public final class unicodeBSU {
