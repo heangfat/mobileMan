@@ -45,11 +45,13 @@ public class tcpAsk extends Thread{
     }*/
     public static long 幀字節數;public static short[] 分辨率 = new short[2];
     public static byte[] tmpBuf;
+    int inPort;
+    public tcpAsk(int portNo){inPort = portNo;}
     @Override
     public void run(){
         try {
             //MainActivity.video1txt.setText("連 TCP…");
-            Socket sock = new Socket(MainActivity.robotIP, 7888);
+            Socket sock = new Socket(MainActivity.robotIP, inPort);
             MainActivity.tcpAskConnected = true;
             try (InputStream inStream = sock.getInputStream()) {
                 try (OutputStream outStream = sock.getOutputStream()) {
@@ -78,7 +80,7 @@ public class tcpAsk extends Thread{
         });
         //System.out.println("[server] " + reader.readLine());
         while(true){
-            String s = "關城樹色";
+            String s = "480,640";
             writer.write(s);writer.newLine();writer.flush();
             ins.read(包長字節,0,8);ins.read(幀高字節,0,2);ins.read(幀寬字節,0,2);
             幀字節數 = ConvertByte.toLong(包長字節);//ByteBuffer.wrap(包長字節).getLong();
