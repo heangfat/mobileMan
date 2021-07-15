@@ -45,8 +45,9 @@ public class tcpAsk extends Thread{
     }*/
     public static long 幀字節數;public static short[] 分辨率 = new short[2];
     public static byte[] tmpBuf;
+    private static int vi;
     int inPort;
-    public tcpAsk(int portNo){inPort = portNo;}
+    public tcpAsk(int portNo, int vdi){inPort = portNo; vi = vdi;}
     @Override
     public void run(){
         try {
@@ -137,18 +138,12 @@ public class tcpAsk extends Thread{
                     MainActivity.video1txt.setText(new StringBuilder().append(String.valueOf(幀字節數)).append(" : ").append(String.valueOf(分辨率[0])).append("×").append(String.valueOf(分辨率[1])).append("\n")/*.append(imgMat.height()).append("×").append(imgMat.width())*/.toString());
                 }
             });
-            MainActivity.imgVu1.post(new Runnable() {
+            MainActivity.imgVus[vi-1].post(new Runnable() {
                 @Override
                 public void run() {
-                    MainActivity.imgVu1.setImageBitmap(dispBmp);
+                    MainActivity.imgVus[vi-1].setImageBitmap(dispBmp);
                 }
             });
-            /*MainActivity.videoView1.post(new Runnable() {
-                @Override
-                public void run() {
-                    MainActivity.videoView1.setVideoURI(imgBuf);
-                }
-            });*/
         }
         //outs.close();
     }
