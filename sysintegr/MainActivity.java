@@ -39,11 +39,13 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("StaticFieldLeak")
     public static TextView distFront, distBack, distLeft, distRight;
     @SuppressLint("StaticFieldLeak")
-    public static TextView video1txt;
-    public static VideoView videoView1;
+    public static TextView video1txt, video2txt, video3txt, video4txt;
+    //public static VideoView videoView1;
     @SuppressLint("StaticFieldLeak")
     public static ImageView imgVu1;
-    public tcpAsk tcp_ask;
+    @SuppressLint("StaticFieldLeak")
+    public static ImageView[] imgVus = new ImageView[4];
+    public tcpAsk TCPask1, TCPask2, TCPask3, TCPask4;
     public static String 口令 = "我是主平板。";
     public static MatOfByte mat;
 
@@ -61,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,8 +83,9 @@ public class MainActivity extends AppCompatActivity {
         distLeft = (TextView) findViewById(R.id.textView_distLeft);
         distRight = (TextView) findViewById(R.id.textView_distRight);
         video1txt = (TextView) findViewById(R.id.textView_v1);
-        videoView1 = (VideoView) findViewById(R.id.videoView1);
-        imgVu1 = (ImageView) findViewById(R.id.imgVu1);
+        //videoView1 = (VideoView) findViewById(R.id.videoView1);
+        imgVu1 = (ImageView) findViewById(R.id.imgVu1);imgVus[0] = (ImageView) findViewById(R.id.imgVu1);
+        imgVus[1] = (ImageView) findViewById(R.id.imgVu2);imgVus[2] = (ImageView) findViewById(R.id.imgVu3);imgVus[3] = (ImageView) findViewById(R.id.imgVu4);
         showRobotIP = (Button) findViewById(R.id.btn_robotIP);showSelfIP = (TextView) findViewById(R.id.textView_selfIP);
         //platformStatus.setBackgroundColor(0xFFF43E06);platformStatus.setText("未發送。");
         new udpBroadCast("開始了！").start();
@@ -90,8 +94,8 @@ public class MainActivity extends AppCompatActivity {
         btnForward.setOnTouchListener(touchListner);btnBackward.setOnTouchListener(touchListner);btnLeft.setOnTouchListener(touchListner);btnRight.setOnTouchListener(touchListner);
         showRobotIP.setText("Robot/"+robotIP);
         try{本機地址 = getLocalHostLANAddress().toString();showSelfIP.setText("Self"+本機地址);}catch(Exception e){e.printStackTrace();}
-        tcp_ask = new tcpAsk(7890);
-        tcp_ask.start();
+        TCPask1 = new tcpAsk(7890,2);
+        TCPask1.start();
         //new tcpReceive().start();
     }
     /*private View.OnClickListener listener = new View.OnClickListener(){
@@ -124,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
                 new udpBroadCast("右").start();
             }
             if (!tcpAskConnected){
-                tcp_ask.start();
+                TCPask1.start();
             }
             return false;
         }
