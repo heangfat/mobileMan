@@ -43,7 +43,7 @@ public class tcpAsk extends Thread{
         }
         sock.close();System.out.println("斷開。");
     }*/
-    public static long 幀字節數;public static short[] 分辨率 = new short[2];
+    public static long 幀字節數;public static int[] 分辨率 = new int[2];
     public static byte[] tmpBuf;
     private static int vi;
     int inPort;
@@ -81,13 +81,13 @@ public class tcpAsk extends Thread{
         });
         //System.out.println("[server] " + reader.readLine());
         while(true){
-            String s = "480,640";
+            String s = "1080,1920";
             writer.write(s);writer.newLine();writer.flush();
             ins.read(包長字節,0,8);ins.read(幀高字節,0,2);ins.read(幀寬字節,0,2);
-            幀字節數 = ConvertByte.toLong(包長字節);//ByteBuffer.wrap(包長字節).getLong();
-            if (幀字節數 <= 0 || 幀字節數 > 100000){continue;}
-            分辨率[0] = ConvertByte.toShort(幀高字節);//ByteBuffer.wrap(幀高字節).getShort();
-            分辨率[1] = ConvertByte.toShort(幀寬字節);//ByteBuffer.wrap(幀寬字節).getShort();
+            幀字節數 = ConvertByte.toInt(包長字節);//ByteBuffer.wrap(包長字節).getLong();
+            if (幀字節數 <= 0 || 幀字節數 > 90000000){continue;}
+            分辨率[0] = 1080;//ConvertByte.toInt(幀高字節);//ByteBuffer.wrap(幀高字節).getShort();
+            分辨率[1] = 1920;//ConvertByte.toInt(幀寬字節);//ByteBuffer.wrap(幀寬字節).getShort();
             tmpBuf = new byte[(int) 幀字節數];
             ins.read(tmpBuf,0, (int) 幀字節數);
             /*MainActivity.video1txt.post(new Runnable() {
@@ -144,6 +144,11 @@ public class tcpAsk extends Thread{
                     MainActivity.imgVus[vi-1].setImageBitmap(dispBmp);
                 }
             });
+            try {
+                Thread.sleep(120);
+            } catch (Exception e){
+                Log.e("","Error while  出錯：",e);
+            }
         }
         //outs.close();
     }
