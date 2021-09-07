@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     public static MulticastSocket ms = null;
     public static DatagramPacket dp;
     public static String udpRcvStr = "";
-    public static String robotIP = "192.168.10.124";//"10.96.45.36";
+    public static String robotIP = "192.168.10.124";//"10.96.45.36";"10.87.240.218";
     String 本機地址;
     public static boolean tcpAskConnected = false;
 
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         btnForward.setOnTouchListener(touchListner);btnBackward.setOnTouchListener(touchListner);btnLeft.setOnTouchListener(touchListner);btnRight.setOnTouchListener(touchListner);
         showRobotIP.setText("Robot/"+robotIP);
         try{本機地址 = getLocalHostLANAddress().toString();showSelfIP.setText("Self"+本機地址);}catch(Exception e){e.printStackTrace();}
-        TCPask1 = new tcpAsk(7890,2);
+        TCPask1 = new tcpAsk(7891,1);
         TCPask1.start();
         //new tcpReceive().start();
     }
