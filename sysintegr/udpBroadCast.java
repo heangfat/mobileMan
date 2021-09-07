@@ -7,7 +7,7 @@ import java.net.MulticastSocket;
 
 public class udpBroadCast extends Thread {
     final String robotIP = MainActivity.robotIP;//10.25.58.72
-    final int robotUDPPort = 6666;
+    final int robotUDPPort = 6566;
     MulticastSocket sender = null;
     DatagramPacket dj = null;
     InetAddress group = null;
