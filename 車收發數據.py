@@ -14,52 +14,39 @@ import random
 sUDPrcv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);sUDPrcv.bind(('',收信端口))
 遙控器地址 = '127.0.0.1';遙控器端口 = 6677
 sUDPsd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)#;sUDPsd.bind((遙控器地址,遙控器端口))
-#sTCPserv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)#;sTCPserv.bind(('',7888));sTCPserv.listen(5)# 文字.
-#sTCPvideo = socket.socket(socket.AF_INET, socket.SOCK_STREAM);sTCPvideo.bind((本機地址,7999));sTCPvideo.listen(5)
+
 口令 = '我是主平板。'
-收得 = ''
+receivedUDPstr = ''# 收得
 亂數 = 算.random.default_rng(1)
-狀態 = {
-	"自平衡臺":[0, 2, 79],
-	"底盤狀態":{"速度":1.2},
-	"距離":[0,0,0,0,0,0]
+mmStatus = {
+	"forkLift":[0, 2, 79],
+	"base":{"速度":1.2},
+	"distance":[0,0,0,0,0,0]
 }
 圖像屬性 = {
 	"img_quality":15,
 	"resolution":(1920,1080)
 }
 #print(f'經 {收信端口} 系聯…')
-def 發信(套接):
+def UDPsendTXT(套接):# Subscribe ROS topic of system components status & send out through UDP. 發信
 	while True:
 		if 遙控器地址 != '127.0.0.1':
-			狀態["距離"] = 算.round(亂數.random(6)*10,4).tolist()
-			#print(f'發至{遙控器地址}:{遙控器端口}')# 收聽 ROS 話題
-			套接.sendto(json.dumps(狀態).encode('utf-8'), (遙控器地址,遙控器端口))
-# def 發視訊(client, useTCP=True):
-# 	camera = cv2.VideoCapture(0)
-# 	編碼參數 = [int(cv2.IMWRITE_JPEG_QUALITY),圖像屬性["img_quality"]]
-# 	while True:
-# 		if True:#遙控器地址 != '127.0.0.1':
-# 			time.sleep(0.13)
-# 			rval, frame = camera.read()
-# 			frame = cv2.resize(frame, 圖像屬性["resolution"])
-# 			result, imgencode = cv2.imencode('.jpg', frame, 編碼參數)
-# 			imgdata = 算.array(imgencode).tobytes()
-# 			try:
-# 				client.send(struct.pack("lhh",len(imgdata), 圖像屬性["resolution"][0],圖像屬性["resolution"][1])+imgdata)#;print(len(imgdata))
-# 				#UDP：套接.sendto(struct.pack("lhh",len(imgdata), 圖像屬性["resolution"][0],圖像屬性["resolution"][1])+imgdata, (遙控器地址,7999))
-# 			except:
-# 				camera.release()
-# def 复挂號信(sock, addr):
-# 	print('%s:%s 求連，受之。' % addr)
-# 	sock.send('歡迎'.encode('utf-8'))
-# 	while True:
-# 		data = sock.recv(1024)
-# 		time.sleep(1)
-# 		if not data or data.decode('utf-8') == '敔':
-# 			break
-# 		sock.send(('喏，%s！' % data.decode('utf-8')).encode('utf-8'))
-# 	sock.close();print('與 %s:%s 斷了。' % addr)
+			mmStatus["distance"] = 算.round(亂數.random(6)*10,4).tolist()# Temporarily generate random float number list to imitate sensor readings in ROS topic.
+			#print(f'Send to {遙控器地址}:{遙控器端口}')
+			# Subsribe ROS topic here. The ROS topic contains the status of system components. Use the subscribed values to update “mmStatus”.
+			套接.sendto(json.dumps(mmStatus).encode('utf-8'), (遙控器地址,遙控器端口))# Send the json string to the pad
+
+def UDPreceiveTXT(套接):# Receive string of commands sent from pad. Sort & publish to ROS topics.
+	global 遙控器地址,receivedUDPstr
+	while True:
+		data, addr = 套接.recvfrom(1024)
+		if data.decode('utf-8')[0:6] == 口令:
+			遙控器地址 = addr[0]#;遙控器端口 = addr[1]
+			receivedUDPstr = data.decode('utf-8')[6:]# Indices 0~5 are for verification. Only parse from 6.
+			# Publish ROS topic here according to the received string. E.g.
+			# if receivedUDPstr == 'mvFwd_1':
+			#	pub.publish(…)
+			print(f"{addr[0]}:{addr[1]} 發來：{data.decode('utf-8')}")
 class 畣复文字 :
 	def __init__(self,受端口):
 		#global sTCPserv
@@ -94,17 +81,8 @@ class 畣复文字 :
 			sock, 對方址口 = self.TCPsvSock.accept()
 			t = threading.Thread(target=self.畣复, args=(sock, 對方址口))
 			t.start()
-def 收信(套接):
-	global 遙控器地址,收得
-	while True:
-		data, addr = 套接.recvfrom(1024)
-		if data.decode('utf-8')[0:6] == 口令:
-			遙控器地址 = addr[0]#;遙控器端口 = addr[1]
-			收得 = data.decode('utf-8')[6:]
-			# 發布 ROS 話題
-			print(f"{addr[0]}:{addr[1]} 發來：{data.decode('utf-8')}")
-綫程收 = threading.Thread(target=收信, args=(sUDPrcv,))
-綫程發 = threading.Thread(target=發信, args=(sUDPsd,))
+綫程收 = threading.Thread(target=UDPreceiveTXT, args=(sUDPrcv,))
+綫程發 = threading.Thread(target=UDPsendTXT, args=(sUDPsd,))
 綫程收.start();綫程發.start()
 #綫程收.join();綫程發.join()
 class scanCameras:
@@ -160,11 +138,3 @@ tcpvideo = 畣复視訊(7891)
 tcpvideo.響應()
 tcptxt = 畣复文字(7888)
 #tcptxt.響應()
-# while True:
-# 	client,addr = sTCPvideo.accept()
-# 	clientThread = threading.Thread(target = 發視訊, args = (client, addr, ))
-# 	clientThread.start()
-
-	# sock, addr = sTCPserv.accept()
-	# t = threading.Thread(target=复挂號信, args=(sock, addr))
-	# t.start()
