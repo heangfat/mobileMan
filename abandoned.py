@@ -26,3 +26,11 @@ def 复挂號信(sock, addr):
 			break
 		sock.send(('喏，%s！' % data.decode('utf-8')).encode('utf-8'))
 	sock.close();print('與 %s:%s 斷了。' % addr)
+while True:
+	client,addr = sTCPvideo.accept()
+	clientThread = threading.Thread(target = 發視訊, args = (client, addr, ))
+	clientThread.start()
+
+	sock, addr = sTCPserv.accept()
+	t = threading.Thread(target=复挂號信, args=(sock, addr))
+	t.start()
