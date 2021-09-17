@@ -43,7 +43,7 @@ public class tcpAsk extends Thread{
         }
         sock.close();System.out.println("斷開。");
     }*/
-    public static long 幀字節數;public static int[] 分辨率 = new int[2];
+    public static long NByteFrame;public static int[] resolutionHW = new int[2];
     public static byte[] tmpBuf;
     private static int vi;
     int inPort;
@@ -69,9 +69,10 @@ public class tcpAsk extends Thread{
     private static void handle(InputStream ins, OutputStream outs) throws IOException {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outs, StandardCharsets.UTF_8));
         BufferedReader reader = new BufferedReader(new InputStreamReader(ins, StandardCharsets.UTF_8));
-        byte[] 包長字節 = new byte[8];byte[] 幀高字節 = new byte[2];byte [] 幀寬字節 = new byte[2];
+        byte[] packLengthByte = new byte[8];byte[] frameHeightByte = new byte[2];byte [] frameWidthByte = new byte[2];
         //byte[] tmpBuf;//Mat image = cv2.imdecode(tmpBuf,1);
         Bitmap decBmp = null;
+        boolean cmpltFrame = true;
         //Scanner scanner = new Scanner(System.in);
         MainActivity.video1txt.post(new Runnable() {
             @Override
@@ -83,13 +84,13 @@ public class tcpAsk extends Thread{
         while(true){
             String s = "1080,1920";
             writer.write(s);writer.newLine();writer.flush();
-            ins.read(包長字節,0,8);ins.read(幀高字節,0,2);ins.read(幀寬字節,0,2);
-            幀字節數 = ConvertByte.toInt(包長字節);//ByteBuffer.wrap(包長字節).getLong();
-            if (幀字節數 <= 0 || 幀字節數 > 90000000){continue;}
-            分辨率[0] = 1080;//ConvertByte.toInt(幀高字節);//ByteBuffer.wrap(幀高字節).getShort();
-            分辨率[1] = 1920;//ConvertByte.toInt(幀寬字節);//ByteBuffer.wrap(幀寬字節).getShort();
-            tmpBuf = new byte[(int) 幀字節數];
-            ins.read(tmpBuf,0, (int) 幀字節數);
+            ins.read(packLengthByte,0,8);ins.read(frameHeightByte,0,2);ins.read(frameWidthByte,0,2);
+            NByteFrame = ConvertByte.toInt(packLengthByte);//ByteBuffer.wrap(packLengthByte).getLong();
+            if (NByteFrame <= 0 || NByteFrame > 90000000){continue;}
+            resolutionHW[0] = 1080;//ConvertByte.toInt(frameHeightByte);//ByteBuffer.wrap(frameHeightByte).getShort();
+            resolutionHW[1] = 1920;//ConvertByte.toInt(frameWidthByte);//ByteBuffer.wrap(frameWidthByte).getShort();
+            tmpBuf = new byte[(int) NByteFrame];
+            ins.read(tmpBuf,0, (int) NByteFrame);
             /*MainActivity.video1txt.post(new Runnable() {
                 @Override
                 public void run() {
@@ -97,15 +98,15 @@ public class tcpAsk extends Thread{
                 }
             });
             int nRead;
-            byte[] data = new byte[(int) 幀字節數];
+            byte[] data = new byte[(int) NByteFrame];
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            while ((nRead = ins.read(data,0, (int) 幀字節數)) > 0){
+            while ((nRead = ins.read(data,0, (int) NByteFrame)) > 0){
                 buffer.write(data,0,nRead);
                 final int nread = nRead;
                 MainActivity.video1txt.post(new Runnable() {
                     @Override
                     public void run() {
-                        MainActivity.video1txt.setText(String.valueOf(幀字節數)+"在循環"+String.valueOf(nread));
+                        MainActivity.video1txt.setText(String.valueOf(NByteFrame)+"在循環"+String.valueOf(nread));
                     }
                 });
             }
@@ -132,20 +133,27 @@ public class tcpAsk extends Thread{
             Frame frm = new Java2DFrameConverter().getFrame(tmpBuf);
             org.bytedeco.opencv.opencv_core.Mat jpgMat = new OpenCVFrameConverter.ToMat().convert(frm);*/
             //String resp = reader.readLine();
+            try {
+                int imgHeight = decBmp.getHeight();
+                cmpltFrame = true;
+            } catch (Exception e){
+                cmpltFrame = false;
+            }
             MainActivity.video1txt.post(new Runnable() {
                 @Override
                 public void run() {
-                    MainActivity.video1txt.setText(new StringBuilder().append(String.valueOf(幀字節數)).append(" : ").append(String.valueOf(分辨率[0])).append("×").append(String.valueOf(分辨率[1])).append("\n")/*.append(imgMat.height()).append("×").append(imgMat.width())*/.toString());
+                    MainActivity.video1txt.setText(new StringBuilder().append(String.valueOf(tmpBuf.length)).append(" : ").append(String.valueOf(resolutionHW[0])).append("×").append(String.valueOf(resolutionHW[1])).append("\n")/*.append(imgMat.height()).append("×").append(imgMat.width())*/.toString());
                 }
             });
+            if(NByteFrame < 10000 ){continue;}
             MainActivity.imgVus[vi-1].post(new Runnable() {
                 @Override
                 public void run() {
-                    MainActivity.imgVus[vi-1].setImageBitmap(dispBmp);
+                    if(NByteFrame < 150000){MainActivity.imgVus[vi-1].setImageBitmap(dispBmp);}
                 }
             });
             try {
-                Thread.sleep(120);
+                Thread.sleep(100);
             } catch (Exception e){
                 Log.e("","Error while  出錯：",e);
             }
